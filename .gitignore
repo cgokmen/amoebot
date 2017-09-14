@@ -76,6 +76,9 @@ target/
 # celery beat schedule file
 celerybeat-schedule
 
+# intellij
+.idea
+
 # SageMath parsed files
 *.sage.py
 
@@ -99,3 +102,5 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+output/
