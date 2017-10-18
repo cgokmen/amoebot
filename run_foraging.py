@@ -1,10 +1,8 @@
-from loaders import compression_simulator_grid_loader
-from compressionsimulator import CompressionSimulator
-from foragingsimulator import ForagingSimulator
-from grid import Grid, Direction
-from particle import Particle, Ant, Food
-from plot_pil import Plotter
 import numpy as np
+
+from compsim.simulate import CompressionSimulator, ForagingSimulator, Grid, Direction, Particle, Ant, UndiscoveredFood
+from compsim.plot import Plotter
+from compsim.io import compression_simulator_grid_loader
 
 if __name__ == "__main__":
     #grid = compression_simulator_grid_loader("input_smallline.txt", True)
@@ -21,13 +19,13 @@ if __name__ == "__main__":
 
     cs = ForagingSimulator(grid)
 
-    food = Food((20, 0), "f00d")
+    food = UndiscoveredFood((20, 0), "f00d")
+    cs.add_food(food)
+
+    #food = Food((-20, 0), "f00d")
     #cs.add_food(food)
 
-    food = Food((-20, 0), "f00d")
-    #cs.add_food(food)
-
-    total_iterations = 10000000
+    total_iterations = 30000000
     i = 0
     unit_iterations = 1000000
 

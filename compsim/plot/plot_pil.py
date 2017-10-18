@@ -1,8 +1,13 @@
-import numpy as np
-from particle import axial_to_pixel_mat
-from PIL import Image, ImageDraw, ImageFont
-import os
 import threading
+
+import numpy as np
+import os
+import time
+import imageio
+import errno
+from PIL import Image, ImageDraw, ImageFont
+
+axial_to_pixel_mat = np.array([[3 / 2., 0], [np.sqrt(3) / 2.0, np.sqrt(3)]])
 
 # Circles in 24x24 bounding boxes
 CIRCLE_BOUNDING = np.array([24, 24])
@@ -16,14 +21,21 @@ EDGE_WIDTH = 4
 # Text size as a multiple of the screen height
 TEXT_FACTOR = 100.0
 
-#FONT = ImageFont.truetype(os.path.join(os.path.dirname(os.path.realpath(__file__)), "cmunorm.ttf"), int(CIRCLE_BOUNDING[1] * TEXT_FACTOR))
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 def save_plt(plot, filename):
     plot.save(filename)
     plot.close()
 
 class Plotter(object):
-    def __init__(self, compression_simulator):
+    def __init__(self, compression_simulator, path=None, gif_path=None):
         self.compression_simulator = compression_simulator
 
         self.min_pos = axial_to_pixel_mat.dot(compression_simulator.grid.min - np.array([1, 1])) * CIRCLE_DIST
@@ -31,13 +43,35 @@ class Plotter(object):
 
         self.size = (self.max_pos - self.min_pos).astype(int)
         self.center = self.size / 2
-        #self.font = FONT
-        self.font = ImageFont.truetype(os.path.join(os.path.dirname(os.path.realpath(__file__)), "cmunorm.ttf"), int(self.size[1] / TEXT_FACTOR))
+        # self.font = FONT
+        self.font = ImageFont.truetype(os.path.join(os.path.dirname(os.path.realpath(__file__)), "cmunorm.ttf"),
+                                       int(self.size[1] / TEXT_FACTOR))
+
+        if path is None:
+            path = os.path.join("output", type(self.compression_simulator).__name__, str(int(time.time())))
+
+        if gif_path is None:
+            gif_path = os.path.join(path, "result.gif")
+
+        if callable(path):
+            self.path = path()
+        else:
+            self.path = path
+        mkdir_p(self.path)
+
+        self.gif_path = gif_path
+        self.gif_writer = []
+        self.last_image = None
+
+        self.closed = False
 
     def get_position_from_axial(self, axial_coordinates):
         return axial_to_pixel_mat.dot(axial_coordinates) * CIRCLE_DIST + self.center
 
-    def plot(self, filename):
+    def plot(self, filename=None):
+        if self.closed:
+            raise ValueError("This plotter has been closed.")
+
         plt = Image.new('RGB', tuple(self.size), (255, 255, 255))
 
         draw = ImageDraw.Draw(plt)
@@ -53,16 +87,20 @@ class Plotter(object):
             neighbor_pos = self.get_position_from_axial(neighbor_extremum)
             draw.line([tuple(pos), tuple(neighbor_pos)], (255, 0, 0), EDGE_WIDTH)
 
-        if True:
+        if False:
             # This part draws the lambda gradient
             for x in xrange(self.compression_simulator.grid.min[0], self.compression_simulator.grid.max[0] + 1):
                 for y in xrange(self.compression_simulator.grid.min[1], self.compression_simulator.grid.max[1] + 1):
                     axial_position = np.array([x, y])
-                    array_position = axial_position[0] + self.compression_simulator.grid.max[0], axial_position[1] + self.compression_simulator.grid.max[1]
+                    array_position = axial_position[0] + self.compression_simulator.grid.max[0], axial_position[1] + \
+                                     self.compression_simulator.grid.max[1]
                     bias = self.compression_simulator._bias_array[array_position]
+                    if not self.compression_simulator.food_found:
+                        bias = 6 - bias
                     position = self.get_position_from_axial(axial_position)
                     clr = int((bias - 1) * 64 - 1)
-                    draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))], (255 - clr, clr, 0))
+                    draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))],
+                                 (255 - clr, clr, 0))
 
         if True:
             for particle in self.compression_simulator.grid.get_all_particles():
@@ -78,8 +116,9 @@ class Plotter(object):
                 for neighbor_position in neighbors_positions:
                     draw.line([tuple_position, tuple(neighbor_position)], (100, 100, 100), EDGE_WIDTH)
 
-                draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))], particle.get_color())
-                #draw.text(tuple(position), str(particle.id), (255,0,0), FONT)
+                draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))],
+                             particle.get_color())
+                # draw.text(tuple(position), str(particle.id), (255,0,0), FONT)
 
                 drawn_hexagons[particle] = True
 
@@ -91,7 +130,8 @@ class Plotter(object):
         metric_count = len(metrics)
         for key in xrange(metric_count):
             metric = metrics[key]
-            draw.text(tuple(start - shift * (metric_count-key)), metric, (0, 0, 0), self.font)
+            metrictext = metric[0] + ": " + metric[1] % metric[2]
+            draw.text(tuple(start - shift * (metric_count - key)), metrictext, (0, 0, 0), self.font)
 
         start = self.get_position_from_axial(self.compression_simulator.grid.min)
         start = np.array([self.size[0] - start[0], start[1]])
@@ -104,5 +144,20 @@ class Plotter(object):
         w, h = draw.textsize(text, self.font)
         draw.text(start - np.array([w, 0]), text, (0, 0, 0), self.font)
 
-        threading.Thread(target=save_plt, args=(plt, filename)).start()
+        self.last_image = plt.copy()
+        self.gif_writer.append(self.last_image)
 
+        if filename is not None:
+            threading.Thread(target=save_plt, args=(plt, os.path.join(self.path, filename))).start()
+
+        return plt
+
+    def close(self):
+        if self.last_image is not None:
+            for _ in xrange(9):
+                self.gif_writer.append(self.last_image)
+
+        imageio.mimsave(self.gif_path, [np.asarray(x) for x in self.gif_writer], duration=0.5)
+        for img in self.gif_writer:
+            img.close()
+        self.closed = True

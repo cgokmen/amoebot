@@ -1,7 +1,20 @@
 import numpy as np
 from enum import Enum
-from particle import Particle
-from util import HashableArray
+
+
+class Particle(object):
+    COLOR = (0, 0, 0)
+
+    def __init__(self, axial_coordinates, id):
+        self.axial_coordinates = np.array(axial_coordinates).astype(int)
+        self.id = id
+
+    def get_color(self):
+        return Particle.COLOR
+
+    def move(self, new_axial_coordinates):
+        self.axial_coordinates = np.array(new_axial_coordinates).astype(int)
+
 
 class Direction(Enum):
     SE = 0
@@ -25,6 +38,7 @@ class Direction(Enum):
 
     def shift_counterclockwise_by(self, by):
         return Direction((self.value + by) % 6)
+
 
 class Grid(object):
     def __init__(self, size):
@@ -54,7 +68,6 @@ class Grid(object):
                     self.__neighbor_particles[(array_position[0], array_position[1], i)] = None
 
         self._grid_dict = {}
-        p = object()
         self._grid_array = np.empty((self.width + 1, self.height + 1), dtype=Particle)
 
         for x in xrange(self.width + 1):
@@ -72,6 +85,9 @@ class Grid(object):
     def is_position_in_bounds(self, axial_coordinates):
         return Grid.is_position_between_positions(axial_coordinates, self.min, self.max)
 
+    def get_valid_coordinates(self):
+        return [(a[0] - self.max[0], a[1] - self.max[1]) for a in np.ndindex(self._grid_array.shape)]
+
     def add_particle(self, particle):
         if not isinstance(particle, Particle):
             raise ValueError("Grid only supports subclasses of Particle")
@@ -85,9 +101,10 @@ class Grid(object):
         if self.get_particle(particle.axial_coordinates) is not None:
             raise ValueError("There already is a particle at this position")
 
-        #self._hex_map[particle.axial_coordinates] = [particle]
-        self._grid_array[particle.axial_coordinates[0] + self.max[0], particle.axial_coordinates[1] + self.max[1]] = particle
-        #self._grid_dict[(particle.axial_coordinates[0], particle.axial_coordinates[1])] = particle
+        # self._hex_map[particle.axial_coordinates] = [particle]
+        self._grid_array[
+            particle.axial_coordinates[0] + self.max[0], particle.axial_coordinates[1] + self.max[1]] = particle
+        # self._grid_dict[(particle.axial_coordinates[0], particle.axial_coordinates[1])] = particle
         self._particle_list.append(particle)
 
         particle_type = type(particle)
@@ -107,7 +124,8 @@ class Grid(object):
             if not self.is_position_in_bounds(pos):
                 continue
 
-            self.__neighbor_particles[pos[0] + self.max[0], pos[1] + self.max[1], direction.shift_counterclockwise_by(3).value] = particle
+            self.__neighbor_particles[
+                pos[0] + self.max[0], pos[1] + self.max[1], direction.shift_counterclockwise_by(3).value] = particle
 
     def move_particle(self, old_position, new_position):
         particle = self.get_particle(old_position)
@@ -130,7 +148,7 @@ class Grid(object):
         particle_type = type(particle)
         array_coords = particle.axial_coordinates[0] + self.max[0], particle.axial_coordinates[1] + self.max[1]
         self._grid_array[array_coords] = None
-        #del self._grid_dict[(particle.axial_coordinates[0], particle.axial_coordinates[1])]
+        # del self._grid_dict[(particle.axial_coordinates[0], particle.axial_coordinates[1])]
         self._particles_by_type[particle_type].remove(particle)
         self._particle_list.remove(particle)
 
@@ -142,11 +160,12 @@ class Grid(object):
             if not self.is_position_in_bounds(pos):
                 continue
 
-            self.__neighbor_particles[pos[0] + self.max[0], pos[1] + self.max[1], direction.shift_counterclockwise_by(3).value] = None
+            self.__neighbor_particles[
+                pos[0] + self.max[0], pos[1] + self.max[1], direction.shift_counterclockwise_by(3).value] = None
 
     def get_particle(self, axial_coordinates, classes_to_consider=None):
         particle = self._grid_array[axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1]]
-        #particle = self._grid_dict.get((axial_coordinates[0], axial_coordinates[1]), None)
+        # particle = self._grid_dict.get((axial_coordinates[0], axial_coordinates[1]), None)
 
         if particle is None:
             return None
@@ -174,20 +193,19 @@ class Grid(object):
 
     def particles_connected(self, classes_to_consider=None):
         def has_eligible_particle(position):
-            return (self.is_position_in_bounds(position)) and (self.get_particle(position, classes_to_consider) is not None)
+            return (self.is_position_in_bounds(position)) and (
+            self.get_particle(position, classes_to_consider) is not None)
 
         return self.check_connected(has_eligible_particle)
 
     def particle_holes(self, classes_to_consider=None):
         def is_empty(position):
-            return (not self.is_position_in_bounds(position)) or (self.get_particle(position, classes_to_consider) is None)
+            return (self.is_position_in_bounds(position)) and (
+            self.get_particle(position, classes_to_consider) is None)
 
         return self.check_connected(is_empty)
 
     def check_connected(self, position_include_fn):
-        minimum = self.min - np.array([1, 1])
-        maximum = self.max + np.array([1, 1])
-
         def bfs(start):
             visited, queue = set(), [start]
             while queue:
@@ -195,7 +213,8 @@ class Grid(object):
                 if vertex not in visited:
                     visited.add(vertex)
 
-                    next_set = set([HashableArray(c) for c in self.get_neighbor_positions(vertex.data) if self.is_position_between_positions(c, minimum, maximum) and position_include_fn(c)])
+                    # We dont use the neighbor position method here - it doesn't support outside-the-box positions
+                    next_set = set([tuple(c) for c in self.get_neighbor_positions(vertex) if position_include_fn(c)])
                     queue.extend(next_set - visited)
 
             return visited
@@ -203,45 +222,52 @@ class Grid(object):
         num_eligible = 0
         start_spot = None
 
-        # Magic number two? We want to be able to iterate one space outside the map to detect gaps, on both sides.
-        diff = (maximum - minimum)[0]
-        for x in xrange(diff[0]):
-            for y in xrange(diff[1]):
-                axial_coordinates = minimum + np.array([x, y])
-
-                if position_include_fn(axial_coordinates):
-                    num_eligible += 1
-                    start_spot = axial_coordinates
+        for axial_coordinates in self.get_valid_coordinates():
+            if position_include_fn(axial_coordinates):
+                num_eligible += 1
+                start_spot = axial_coordinates
 
         # If no positions match the criteria
         if num_eligible == 0:
             return True
 
         # Does a breadth-first search reach all eligible particles?
-        return len(bfs(HashableArray(start_spot))) == num_eligible
+        return len(bfs(tuple(start_spot))) == num_eligible
 
     def neighbor_count(self, axial_coordinates, classes_to_consider=None):
         return len(self.get_neighbors(axial_coordinates, classes_to_consider))
 
-    def get_neighbors(self, axial_coordinates, classes_to_consider=None):
-        #neighbors = [self.get_particle(neighbor_position, classes_to_consider) for neighbor_position in self.get_neighbor_positions(axial_coordinates)]
+    def get_neighbors(self, axial_coordinates, classes_to_consider=None, include_none=False):
+        # neighbors = [self.get_particle(neighbor_position, classes_to_consider) for neighbor_position in self.get_neighbor_positions(axial_coordinates)]
         neighbors = self.__neighbor_particles[axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1]]
 
-        return [n for n in neighbors if n is not None and (classes_to_consider is None or isinstance(n, classes_to_consider))]
+        if include_none:
+            result = []
+            for n in neighbors:
+                if n is None or classes_to_consider is None or isinstance(n, classes_to_consider):
+                    result.append(n)
+                elif classes_to_consider is not None and not isinstance(n, classes_to_consider):
+                    result.append(None)
+            return result
+        else:
+            return [n for n in neighbors if
+                    n is not None and (classes_to_consider is None or isinstance(n, classes_to_consider))]
 
     def get_neighbor_in_direction(self, axial_coordinates, direction, classes_to_consider=None):
-        neighbor = self.__neighbor_particles[axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1], direction.value]
+        neighbor = self.__neighbor_particles[
+            axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1], direction.value]
         return neighbor if classes_to_consider is None or isinstance(neighbor, classes_to_consider) else None
 
     def is_neighbor(self, axial_coordinates, neighbor_axial):
         return np.linalg.norm(axial_coordinates[0] - neighbor_axial[0])
 
     def get_position_in_direction(self, axial_coordinates, direction):
-        #return axial_coordinates + direction.axial_vector()
-        return self.__neighbor_coordinates[axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1], direction.value]
+        # return axial_coordinates + direction.axial_vector()
+        return self.__neighbor_coordinates[
+            axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1], direction.value]
 
     def get_neighbor_positions(self, axial_coordinates):
-        #return [axial_coordinates + d.axial_vector() for d in Direction]
+        # return [axial_coordinates + d.axial_vector() for d in Direction]
         return self.__neighbor_coordinates[axial_coordinates[0] + self.max[0], axial_coordinates[1] + self.max[1]]
 
     def calculate_perimeter(self, classes_to_consider=None):

@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from particle import axial_to_pixel_mat
+from compsim.simulate.particle import axial_to_pixel_mat
 from matplotlib.collections import LineCollection
+
 
 def plot(compression_simulator,
          filename,
@@ -11,10 +12,10 @@ def plot(compression_simulator,
          alpha=1.0,
          line_widths=1,
          label=None):
-
     plt.figure()
 
-    extreme_coords = axial_to_pixel_mat.T.dot(np.array([hex.position for hex in compression_simulator.grid.get_all_particles()]).T).flatten()
+    extreme_coords = axial_to_pixel_mat.T.dot(
+        np.array([hex.position for hex in compression_simulator.grid.get_all_particles()]).T).flatten()
     min_coord = np.amin(extreme_coords)
     max_coord = np.amax(extreme_coords)
     plt.axis([min_coord, max_coord, min_coord, max_coord])
@@ -63,4 +64,4 @@ def plot(compression_simulator,
 
     plt.savefig(filename)
 
-    #plt.show()
+    # plt.show()
