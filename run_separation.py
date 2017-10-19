@@ -19,8 +19,8 @@ if __name__ == "__main__":
 
         grid = separation_simulator_grid_loader(input_file)
 
-        compression_constants = range(1, 5.25, 0.25)
-        separation_constants = range(1, 5.25, 0.25)
+        compression_constants = [1+x*0.25 for x in range((5 - 1) * 4 + 1)]
+        separation_constants = [1+x*0.25 for x in range((5 - 1) * 4 + 1)]
 
         compression_constants += [1.0 / x for x in compression_constants]
         separation_constants += [1.0 / x for x in compression_constants]
