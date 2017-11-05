@@ -176,11 +176,11 @@ class CompressionSimulator(object):
     def get_metrics(self, classes_to_move=None):
         metrics = []
 
-        metrics.append(("Bias", "%%.2f", self.bias))
-        metrics.append(("Iterations", "%%d", self.iterations_run))
-        metrics.append(("Movements made", "%%d", self.movements))
-        metrics.append(("Rounds completed:", "%%d", self.rounds))
-        metrics.append(("Perimeter", "%%d", self.grid.calculate_perimeter(classes_to_move)))
-        metrics.append(("Center of mass", "x = %%.2f, y = %%.2f", tuple(self.grid.find_center_of_mass(classes_to_move))))
+        metrics.append(("Bias", "%.2f", self.bias))
+        metrics.append(("Iterations", "%d", self.iterations_run))
+        metrics.append(("Movements made", "%d", self.movements))
+        metrics.append(("Rounds completed:", "%d", self.rounds))
+        metrics.append(("Perimeter", "%d", self.grid.calculate_perimeter(classes_to_move)))
+        metrics.append(("Center of mass", "x = %.2f, y = %.2f", tuple(self.grid.find_center_of_mass(classes_to_move))))
 
         return metrics

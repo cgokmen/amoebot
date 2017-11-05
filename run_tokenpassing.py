@@ -6,7 +6,7 @@ from compsim.plot import Plotter
 from compsim.io import compression_simulator_grid_loader
 
 if __name__ == "__main__":
-    grid = compression_simulator_grid_loader("input/input_smallhex.txt", True, Ant)
+    grid = compression_simulator_grid_loader("input/input_smallhex.txt", True, (Ant,))
 
     cs = TokenPassingSimulator(grid)
 

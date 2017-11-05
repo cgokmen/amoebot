@@ -4,7 +4,7 @@ class MetricsIO:
     def __init__(self, compression_simulator, filename):
         self.compression_simulator = compression_simulator
         self.file = open(filename, "wb")
-        self.csv_writer = csv.writer(self.file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        self.csv_writer = csv.writer(self.file, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
         # Write the metric header:
         metrics = self.compression_simulator.get_metrics()

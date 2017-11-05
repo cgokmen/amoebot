@@ -315,3 +315,25 @@ class Grid(object):
             num_particles += 1
 
         return center_of_mass if num_particles == 0 else center_of_mass / num_particles
+
+    def count_neighborhoods(self, classes_to_consider=None):
+        sum = 0
+        for particle in self.get_all_particles(classes_to_consider):
+            sum += self.neighbor_count(particle.axial_coordinates, classes_to_consider)
+
+        return sum / 2
+
+    def count_neighborhoods_between_classes(self, class1, class2):
+        particles1 = self.get_all_particles_by_direct_class(class1)
+
+        result = sum(self.neighbor_count(p.axial_coordinates, class2) for p in particles1)
+
+        return result
+
+    def count_heterogeneous_neighborhoods(self, classes_to_consider=None):
+        particles = self.get_all_particles(classes_to_consider)
+        return sum(sum(1 for n in self.get_neighbors(p.axial_coordinates, classes_to_consider) if not isinstance(n, type(p))) for p in particles) / 2
+
+    def count_homogeneous_neighborhoods(self, classes_to_consider):
+        particles = self.get_all_particles(classes_to_consider=None)
+        return sum(sum(1 for n in self.get_neighbors(p.axial_coordinates, classes_to_consider) if isinstance(n, type(p))) for p in particles) / 2

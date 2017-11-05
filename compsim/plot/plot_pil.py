@@ -60,15 +60,14 @@ class Plotter(object):
         mkdir_p(self.path)
 
         self.gif_path = gif_path
-        self.gif_writer = []
-        self.last_image = None
+        self.gif_writer = imageio.get_writer(self.gif_path, mode="I", duration=0.5)
 
         self.closed = False
 
     def get_position_from_axial(self, axial_coordinates):
         return axial_to_pixel_mat.dot(axial_coordinates) * CIRCLE_DIST + self.center
 
-    def plot(self, filename=None):
+    def draw_plot(self):
         if self.closed:
             raise ValueError("This plotter has been closed.")
 
@@ -103,6 +102,7 @@ class Plotter(object):
                                  (255 - clr, clr, 0))
 
         if True:
+            # This part draws the particles & their links
             for particle in self.compression_simulator.grid.get_all_particles():
                 position = self.get_position_from_axial(particle.axial_coordinates)
 
@@ -118,7 +118,7 @@ class Plotter(object):
 
                 draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))],
                              particle.get_color())
-                # draw.text(tuple(position), str(particle.id), (255,0,0), FONT)
+                #draw.text(tuple(position), "%.2f" % particle.bias if hasattr(particle, "bias") else "N/A", (0,0,0), self.font)
 
                 drawn_hexagons[particle] = True
 
@@ -130,7 +130,7 @@ class Plotter(object):
         metric_count = len(metrics)
         for key in xrange(metric_count):
             metric = metrics[key]
-            metrictext = metric[0] + ": " + metric[1] % metric[2]
+            metrictext = metric[0] + ": " + (metric[1] % metric[2])
             draw.text(tuple(start - shift * (metric_count - key)), metrictext, (0, 0, 0), self.font)
 
         start = self.get_position_from_axial(self.compression_simulator.grid.min)
@@ -144,20 +144,24 @@ class Plotter(object):
         w, h = draw.textsize(text, self.font)
         draw.text(start - np.array([w, 0]), text, (0, 0, 0), self.font)
 
-        self.last_image = plt.copy()
-        self.gif_writer.append(self.last_image)
-
-        if filename is not None:
-            threading.Thread(target=save_plt, args=(plt, os.path.join(self.path, filename))).start()
-
         return plt
 
-    def close(self):
-        if self.last_image is not None:
-            for _ in xrange(9):
-                self.gif_writer.append(self.last_image)
+    def plot(self, filename):
+        plt = self.draw_plot()
+        self.gif_writer.append_data(np.array(plt))
 
-        imageio.mimsave(self.gif_path, [np.asarray(x) for x in self.gif_writer], duration=0.5)
-        for img in self.gif_writer:
-            img.close()
+        #threading.Thread(target=save_plt, args=(plt, os.path.join(self.path, filename))).start()
+        save_plt(plt, os.path.join(self.path, filename))
+
+    def close(self):
+        plt = self.draw_plot()
+
+        for x in xrange(9):
+            self.gif_writer.append_data(np.array(plt))
+
+        self.gif_writer.close()
         self.closed = True
+
+        #imageio.mimsave(self.gif_path, [np.asarray(x) for x in self.gif_writer], duration=0.5)
+        #for img in self.gif_writer:
+        #    img.close()

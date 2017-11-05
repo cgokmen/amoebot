@@ -15,17 +15,23 @@ class Ant(Particle):
         self.token = None
         self.food_direction = None
 
-        self.bias = 1
+        self.bias = 0.25
 
     def get_color(self):
-        if self.token is not None:
-            if self.token.is_food:
-                return (128, 0, 128)
-            else:
-                return (0, 128, 128)
+        # These are for the token passing:
+        #
+        # if self.token is not None:
+        #     if self.token.is_food:
+        #         return (128, 0, 128)
+        #     else:
+        #         return (0, 128, 128)
+        #
+        # clr = int((self.bias - 1) * 64 - 1)
 
-        clr = int((self.bias - 1) * 64 - 1)
-        return 255 - clr, clr, 0
+        clr = max(0, min(255, int(self.bias * 51)))
+        return clr, 255-clr, 0
+
+
 
 
 class Food(Particle):
