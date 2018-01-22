@@ -6,8 +6,7 @@ from . import Direction
 
 class CompressionSimulator(object):
     def __init__(self, grid, bias):
-        if not self.is_grid_valid(grid):
-            raise ValueError("This grid is not valid for this problem")
+        self.validate_grid(grid)
 
         self.grid = grid
         self.bias = float(bias)
@@ -25,8 +24,9 @@ class CompressionSimulator(object):
         self.probability_series = []
 
     @staticmethod
-    def is_grid_valid(grid):
-        return grid.particles_connected() and grid.particle_holes()
+    def validate_grid(grid):
+        if not (grid.particles_connected() and grid.particle_holes()):
+            raise ValueError("CompressionSimulator connectivity conditions not met.")
 
     def run_iterations(self, iterations, classes_to_move=None):
         particles = self.grid.get_all_particles(classes_to_move)
@@ -67,7 +67,7 @@ class CompressionSimulator(object):
             # print("Existing", current_location, random_direction, new_location)
             return False
 
-        if not self.valid_move(current_location, new_location, random_direction):  # TODO: Check classes to move?
+        if not self.valid_move(random_particle, current_location, new_location, random_direction):  # TODO: Check classes to move?
             # print("Invalid")
             return False
 
@@ -96,7 +96,7 @@ class CompressionSimulator(object):
 
         return True
 
-    def valid_move(self, old_position, new_position, direction):
+    def valid_move(self, particle, old_position, new_position, direction):
         a = self.grid.neighbor_count(old_position) < 5
         b = self.property1(old_position, new_position, direction)
         c = self.property2(old_position, new_position, direction)

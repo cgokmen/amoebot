@@ -64,8 +64,9 @@ class ForagingSimulator(CompressionSimulator):
         self.food_found = False
 
     @staticmethod
-    def is_grid_valid(grid):
-        return grid.particles_connected(Ant) and grid.particle_holes()
+    def validate_grid(grid):
+        if not(grid.particles_connected(Ant) and grid.particle_holes()):
+            raise ValueError("ForagingSimulator connectivity rules not satisfied.")
 
     def add_food(self, food):
         self.grid.add_particle(food)
@@ -153,7 +154,7 @@ class ForagingSimulator(CompressionSimulator):
 
         return m
 
-    def valid_move(self, old_position, new_position, direction):
+    def valid_move(self, particle, old_position, new_position, direction):
         if self.grid.neighbor_count(old_position, Food) > 0:
             # Adjacent to food? Don't move
             return False

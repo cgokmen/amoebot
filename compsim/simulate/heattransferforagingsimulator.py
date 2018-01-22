@@ -23,7 +23,7 @@ class HeatTransferForagingSimulator(HeatTransferSimulator):
 
         return m
 
-    def valid_move(self, old_position, new_position, direction):
+    def valid_move(self, particle, old_position, new_position, direction):
         if self.grid.neighbor_count(old_position, Food) > 0:
             # Adjacent to food? Don't move
             return False

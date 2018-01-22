@@ -7,9 +7,7 @@ from compsim.simulate import Grid, Particle, ColoredParticle
 
 LEGACY_MATRIX = np.array([[1, 0], [0, -1]])
 
-HUE_RANGE = (0, 300/float(360))
-
-SOME_COLORS = [
+BRIGHT_COLORS = [
     (230, 25, 75),
     (60, 180, 75),
     (255, 225, 25),
@@ -31,6 +29,12 @@ SOME_COLORS = [
     (0, 0, 128),
     (128, 128, 128),
     (245, 130, 48)
+]
+
+GREYSCALE_COLORS = [
+    (200, 200, 200),
+    (0, 0, 0),
+    (100, 100, 100)
 ]
 
 def compression_simulator_grid_loader(filename, legacy=False, particle_types=(Particle,)):
@@ -64,7 +68,7 @@ def compression_simulator_grid_loader(filename, legacy=False, particle_types=(Pa
 
     return grid
 
-def separation_simulator_grid_loader(filename, legacy=False):
+def separation_simulator_grid_loader(filename, base_class=ColoredParticle, colors=BRIGHT_COLORS):
     f = open(filename, "r")
 
     size = np.array(map(int, f.readline().split()))
@@ -83,26 +87,14 @@ def separation_simulator_grid_loader(filename, legacy=False):
         data = map(int, f.readline().split())
         position = np.array([data[0], data[1]])
 
-        if legacy:
-            position -= size / 2
-            position = LEGACY_MATRIX.dot(position)
-            # position[1] = -position[0] - position[1]
-
         particle_data.append((position, data[2]))
         particle_classes[data[2]] = True
 
     # Generate the classes!
-    count_classes = len(particle_classes)
-    HSV_tuples = [(x * 1.0 / count_classes, 0.5, 0.5) for x in range(count_classes)]
-    RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-    RGB_tuples = [tuple(int(x * 255) for x in rgb) for rgb in RGB_tuples]
     for index, id in enumerate(particle_classes.keys()):
-        hue = HUE_RANGE[0] + (HUE_RANGE[1] - HUE_RANGE[0]) * (index / count_classes)
-        rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+        col = colors[index]
 
-        col = SOME_COLORS[index]
-
-        subclass = type('ColoredParticle_%d' % id, (ColoredParticle,), {'COLOR': col})
+        subclass = type('ColoredParticle_%d' % id, (base_class,), {'COLOR': col})
         particle_classes[id] = subclass
 
     # Add the particles
@@ -112,3 +104,22 @@ def separation_simulator_grid_loader(filename, legacy=False):
     #print("Loaded %s successfully" % filename)
 
     return grid
+
+def separation_simulator_grid_saver(filename, grid):
+    with open(filename, 'w') as f:
+        particles = grid.get_all_particles()
+        classes_ids = dict()
+        curr_id = 0
+
+        f.write("%d %d\n" % tuple(grid.size))
+        f.write("%d\n" % len(particles))
+
+        for particle in particles:
+            cls = type(particle)
+            coords = particle.axial_coordinates
+
+            if cls not in classes_ids:
+                classes_ids[cls] = curr_id
+                curr_id += 1
+
+            f.write("%d %d %d\n" % (coords[0], coords[1], classes_ids[cls]))

@@ -1,7 +1,7 @@
 import numpy as np
 
 from compsim.simulate import CompressionSimulator, ForagingSimulator, Grid, Direction, Particle, Ant, UndiscoveredFood
-from compsim.plot import Plotter
+from compsim.plot import RasterPlotter
 from compsim.io import compression_simulator_grid_loader
 from compsim.generate import generate_random_grid
 
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     i = 0
     unit_iterations = 1000000
 
-    plotter = Plotter(cs)
+    plotter = RasterPlotter(cs)
 
     plotter.plot("%d.jpg" % i)
 

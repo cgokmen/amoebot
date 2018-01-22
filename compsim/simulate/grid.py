@@ -88,6 +88,18 @@ class Grid(object):
     def get_valid_coordinates(self):
         return [(a[0] - self.max[0], a[1] - self.max[1]) for a in np.ndindex(self._grid_array.shape)]
 
+    def get_valid_empty_neighborhoods(self):
+        positions = set()
+
+        for particle in self.get_all_particles():
+            neighbors = self.get_neighbor_positions(particle.axial_coordinates)
+
+            for neighbor in neighbors:
+                if self.get_particle(neighbor) is None:
+                    positions.add(tuple(neighbor))
+
+        return list(positions)
+
     def add_particle(self, particle):
         if not isinstance(particle, Particle):
             raise ValueError("Grid only supports subclasses of Particle")
@@ -214,7 +226,7 @@ class Grid(object):
                     visited.add(vertex)
 
                     # We dont use the neighbor position method here - it doesn't support outside-the-box positions
-                    next_set = set([tuple(c) for c in self.get_neighbor_positions(vertex) if position_include_fn(c)])
+                    next_set = set(tuple(c) for c in self.get_neighbor_positions(vertex) if position_include_fn(c))
                     queue.extend(next_set - visited)
 
             return visited

@@ -34,7 +34,7 @@ def save_plt(plot, filename):
     plot.save(filename)
     plot.close()
 
-class Plotter(object):
+class RasterPlotter(object):
     def __init__(self, compression_simulator, path=None, gif_path=None):
         self.compression_simulator = compression_simulator
 

@@ -2,7 +2,7 @@ import os
 import time
 
 from compsim.simulate import TokenPassingSimulator, Ant, UndiscoveredFood
-from compsim.plot import Plotter
+from compsim.plot import RasterPlotter
 from compsim.io import compression_simulator_grid_loader
 
 if __name__ == "__main__":
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     total_iterations = 500
     unit_iterations = 1
 
-    plotter = Plotter(cs, os.path.join("output", "tokenpassing", str(int(time.time()))))
+    plotter = RasterPlotter(cs, os.path.join("output", "tokenpassing", str(int(time.time()))))
 
     plotter.plot("%d.jpg" % cs.iterations_run)
 

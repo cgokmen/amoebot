@@ -5,3 +5,5 @@ from tokenpassingsimulator import Token, TokenPassingSimulator
 from separationsimulator import SeparationSimulator, ConnectivityRule, ColoredParticle
 from heattransfersimulator import HeatTransferSimulator
 from heattransferforagingsimulator import HeatTransferForagingSimulator
+from wormtheorysimulator import WormParticle, WormTheorySimulator
+from newseparationsimulator import NewSeparationSimulator
