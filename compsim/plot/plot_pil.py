@@ -1,3 +1,4 @@
+# coding=utf-8
 import threading
 
 import numpy as np
@@ -21,6 +22,7 @@ EDGE_WIDTH = 4
 # Text size as a multiple of the screen height
 TEXT_FACTOR = 100.0
 
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -30,9 +32,11 @@ def mkdir_p(path):
         else:
             raise
 
+
 def save_plt(plot, filename):
     plot.save(filename)
     plot.close()
+
 
 class RasterPlotter(object):
     def __init__(self, compression_simulator, path=None, gif_path=None):
@@ -86,21 +90,6 @@ class RasterPlotter(object):
             neighbor_pos = self.get_position_from_axial(neighbor_extremum)
             draw.line([tuple(pos), tuple(neighbor_pos)], (255, 0, 0), EDGE_WIDTH)
 
-        if False:
-            # This part draws the lambda gradient
-            for x in xrange(self.compression_simulator.grid.min[0], self.compression_simulator.grid.max[0] + 1):
-                for y in xrange(self.compression_simulator.grid.min[1], self.compression_simulator.grid.max[1] + 1):
-                    axial_position = np.array([x, y])
-                    array_position = axial_position[0] + self.compression_simulator.grid.max[0], axial_position[1] + \
-                                     self.compression_simulator.grid.max[1]
-                    bias = self.compression_simulator._bias_array[array_position]
-                    if not self.compression_simulator.food_found:
-                        bias = 6 - bias
-                    position = self.get_position_from_axial(axial_position)
-                    clr = int((bias - 1) * 64 - 1)
-                    draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))],
-                                 (255 - clr, clr, 0))
-
         if True:
             # This part draws the particles & their links
             for particle in self.compression_simulator.grid.get_all_particles():
@@ -118,7 +107,7 @@ class RasterPlotter(object):
 
                 draw.ellipse([tuple(position - (CIRCLE_BOUNDING / 2)), tuple(position + (CIRCLE_BOUNDING / 2))],
                              particle.get_color())
-                #draw.text(tuple(position), "%.2f" % particle.bias if hasattr(particle, "bias") else "N/A", (0,0,0), self.font)
+                # draw.text(tuple(position), "%.2f" % particle.bias if hasattr(particle, "bias") else "N/A", (0,0,0), self.font)
 
                 drawn_hexagons[particle] = True
 
@@ -150,7 +139,7 @@ class RasterPlotter(object):
         plt = self.draw_plot()
         self.gif_writer.append_data(np.array(plt))
 
-        #threading.Thread(target=save_plt, args=(plt, os.path.join(self.path, filename))).start()
+        # threading.Thread(target=save_plt, args=(plt, os.path.join(self.path, filename))).start()
         save_plt(plt, os.path.join(self.path, filename))
 
     def close(self):
@@ -162,6 +151,6 @@ class RasterPlotter(object):
         self.gif_writer.close()
         self.closed = True
 
-        #imageio.mimsave(self.gif_path, [np.asarray(x) for x in self.gif_writer], duration=0.5)
-        #for img in self.gif_writer:
+        # imageio.mimsave(self.gif_path, [np.asarray(x) for x in self.gif_writer], duration=0.5)
+        # for img in self.gif_writer:
         #    img.close()

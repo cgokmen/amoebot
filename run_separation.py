@@ -24,7 +24,7 @@ def run_simulation(input_file, root_dir, c, model_name):
     path = os.path.join(root_dir, model_name, sim_name)
     gif_path = os.path.join(root_dir, model_name, sim_name, "animation.gif")
 
-    plotter = VectorPlotter(cs, path, gif_path)
+    plotter = VectorPlotter(cs, path)
 
     plotter.plot("%d.pdf" % i)
 

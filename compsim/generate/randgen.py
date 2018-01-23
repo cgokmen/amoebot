@@ -1,8 +1,10 @@
+# coding=utf-8
 import numpy as np
 import random
 
 from compsim.simulate import Grid, ColoredParticle, NewSeparationSimulator
 from compsim.io import BRIGHT_COLORS
+
 
 def generate_random_grid(n_particles, simulator_type, weighted_particle_types, size=None):
     # weighted particle types is a list of particle types in (single-param initializer, weight) format
@@ -20,7 +22,8 @@ def generate_random_grid(n_particles, simulator_type, weighted_particle_types, s
     total_weight = float(sum(wp[1] for wp in weighted_particle_types))
 
     # Choose the classes for our particles:
-    particle_types = list(np.random.choice([wt[0] for wt in weighted_particle_types], n_particles, True, [wt[1] / total_weight for wt in weighted_particle_types]))
+    particle_types = list(np.random.choice([wt[0] for wt in weighted_particle_types], n_particles, True,
+                                           [wt[1] / total_weight for wt in weighted_particle_types]))
 
     # Manually add the first particle at the center
     p_init = particle_types.pop(0)
@@ -45,7 +48,7 @@ def generate_random_grid(n_particles, simulator_type, weighted_particle_types, s
 
             try:
                 simulator_type.validate_grid(grid)
-            except:
+            except ValueError:
                 grid.remove_particle(particle)
                 continue
 
@@ -56,7 +59,10 @@ def generate_random_grid(n_particles, simulator_type, weighted_particle_types, s
     print "Random grid generation successful"
     return grid
 
-def generate_random_separation_grid(n_particles, n_classes, size=None, simulator_type=NewSeparationSimulator, base_class=ColoredParticle, colors=BRIGHT_COLORS):
-    classes = [(type('ColoredParticle_%d' % index, (base_class,), {'COLOR': colors[index]}), 1.0 / n_classes) for index in xrange(n_classes)]
+
+def generate_random_separation_grid(n_particles, n_classes, size=None, simulator_type=NewSeparationSimulator,
+                                    base_class=ColoredParticle, colors=BRIGHT_COLORS):
+    classes = [(type('ColoredParticle_%d' % index, (base_class,), {'COLOR': colors[index]}), 1.0 / n_classes) for index
+               in xrange(n_classes)]
 
     return generate_random_grid(n_particles, simulator_type, classes, size)

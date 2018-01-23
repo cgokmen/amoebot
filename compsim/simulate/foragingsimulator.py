@@ -1,6 +1,7 @@
+# coding=utf-8
 import numpy as np
 
-from . import CompressionSimulator, Direction, Particle
+from . import CompressionSimulator, Directions, Particle
 
 BIAS_LOW = 1
 BIAS_HIGH = 5
@@ -9,8 +10,8 @@ SHIFT = (np.log(BIAS_HIGH - BIAS_LOW) / np.log(LOG_BASE)) + 1
 
 
 class Ant(Particle):
-    def __init__(self, axial_coordinates, id):
-        Particle.__init__(self, axial_coordinates, id)
+    def __init__(self, axial_coordinates, identifier):
+        Particle.__init__(self, axial_coordinates, identifier)
 
         self.token = None
         self.food_direction = None
@@ -29,16 +30,14 @@ class Ant(Particle):
         # clr = int((self.bias - 1) * 64 - 1)
 
         clr = max(0, min(255, int(self.bias * 51)))
-        return clr, 255-clr, 0
-
-
+        return clr, 255 - clr, 0
 
 
 class Food(Particle):
     COLOR = (0, 0, 128)
 
-    def __init__(self, axial_coordinates, id):
-        Particle.__init__(self, axial_coordinates, id)
+    def __init__(self, axial_coordinates, identifier):
+        Particle.__init__(self, axial_coordinates, identifier)
 
     def get_color(self):
         return Food.COLOR
@@ -65,7 +64,7 @@ class ForagingSimulator(CompressionSimulator):
 
     @staticmethod
     def validate_grid(grid):
-        if not(grid.particles_connected(Ant) and grid.particle_holes()):
+        if not (grid.particles_connected(Ant) and grid.particle_holes()):
             raise ValueError("ForagingSimulator connectivity rules not satisfied.")
 
     def add_food(self, food):
@@ -97,9 +96,9 @@ class ForagingSimulator(CompressionSimulator):
             current_bias = np.power(LOG_BASE, - current_radius + SHIFT) + 1
 
             current_vector = np.array(
-                Direction.SW.axial_vector()) * current_radius  # Start SW so that the first move is 0 (SE)
+                Directions.SW.axial_vector()) * current_radius  # Start SW so that the first move is 0 (SE)
 
-            noneInBounds = True
+            none_in_bounds = True
 
             for i in xrange(6):
                 for j in xrange(current_radius):
@@ -112,11 +111,11 @@ class ForagingSimulator(CompressionSimulator):
                             food_bias_arrays[
                                 k, current_position[0] + self.grid.max[0], current_position[1] + self.grid.max[
                                     1]] = current_bias
-                            noneInBounds = False
+                            none_in_bounds = False
 
-                    current_vector += np.array(Direction(i).axial_vector())
+                    current_vector += np.array(Directions.ALL[i].axial_vector())
 
-            if noneInBounds:
+            if none_in_bounds:
                 break
 
         # for a in food_bias_arrays:
@@ -160,10 +159,10 @@ class ForagingSimulator(CompressionSimulator):
             return False
 
         return self.grid.neighbor_count(old_position) < 5 and (
-        self.property1(old_position, new_position, direction, Ant) or self.property2(old_position, new_position,
-                                                                                     direction, Ant)) and (
-               self.property1(old_position, new_position, direction, (Ant, DiscoveredFood)) or self.property2(
-                   old_position, new_position, direction, (Ant, DiscoveredFood)))
+            self.property1(old_position, new_position, direction, Ant) or self.property2(old_position, new_position,
+                                                                                         direction, Ant)) and (
+                   self.property1(old_position, new_position, direction, (Ant, DiscoveredFood)) or self.property2(
+                       old_position, new_position, direction, (Ant, DiscoveredFood)))
 
     def get_metrics(self, _=None):
         metrics = CompressionSimulator.get_metrics(self, Ant)

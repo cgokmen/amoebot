@@ -1,3 +1,4 @@
+# coding=utf-8
 import threading
 
 import numpy as np
@@ -30,6 +31,7 @@ TEXT_FACTOR = 100.0
 
 BORDER_COLOR = (0.1, 0.1, 0.1)
 
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -39,9 +41,11 @@ def mkdir_p(path):
         else:
             raise
 
-class PDFS:
+
+class PDFS(object):
     """Simple class to allow gizeh to create pdf figures"""
-    def __init__(self, name, width, height, bg_color=None):
+
+    def __init__(self, name, width, height):
         self.width = width
         self.height = height
         self._cairo_surface = cairo.PDFSurface(name, width, height)
@@ -60,7 +64,7 @@ class PDFS:
 
 
 class VectorPlotter(object):
-    def __init__(self, compression_simulator, path=None, gif_path=None):
+    def __init__(self, compression_simulator, path=None):
         self.compression_simulator = compression_simulator
 
         self.min_pos = axial_to_pixel_mat.dot(compression_simulator.grid.min - np.array([1, 1])) * CIRCLE_DIST
@@ -120,11 +124,13 @@ class VectorPlotter(object):
             tuple_position = tuple(position)
 
             for neighbor_position in neighbors_positions:
-                line = gizeh.polyline(points=[tuple_position, tuple(neighbor_position)], stroke_width=EDGE_WIDTH, stroke=(0.4, 0.4, 0.4))
+                line = gizeh.polyline(points=[tuple_position, tuple(neighbor_position)], stroke_width=EDGE_WIDTH,
+                                      stroke=(0.4, 0.4, 0.4))
                 line.draw(surface)
 
             color = tuple([x / 255.0 for x in particle.get_color()])
-            circle = gizeh.circle(r=CIRCLE_RADIUS, xy=position, fill=color, stroke=(0,0,0), stroke_width=CIRCLE_STROKE)
+            circle = gizeh.circle(r=CIRCLE_RADIUS, xy=position, fill=color, stroke=(0, 0, 0),
+                                  stroke_width=CIRCLE_STROKE)
             circle.draw(surface)
 
             drawn_particles[particle] = True

@@ -1,13 +1,15 @@
-import numpy as np
+# coding=utf-8
 from enum import Enum
 
-from . import CompressionSimulator, Direction, Particle, Grid
+from . import CompressionSimulator, Particle
+
 
 class ConnectivityRule(Enum):
     Strict = 0
     Interclass = 1
     Intraclass = 2
     Free = 3
+
 
 class ColoredParticle(Particle):
     COLOR = (0, 0, 0)
@@ -76,26 +78,19 @@ class SeparationSimulator(CompressionSimulator):
         return r
 
     def get_metrics(self, classes_to_move=None):
-        metrics = []
-
-        metrics.append(("Lambda bias", "%.2f", self.bias))
-        metrics.append(("Alpha bias", "%.2f", self.bias_alpha))
-        metrics.append(("Connectivity rule", "%s", self.connectivity_rule.name))
-        metrics.append(("Iterations", "%d", self.iterations_run))
-        metrics.append(("Movements made", "%d", self.movements))
-        metrics.append(("Rounds completed:", "%d", self.rounds))
-        #metrics.append(("Perimeter", "%%d", self.grid.calculate_perimeter(classes_to_move)))
-        metrics.append(("Center of mass", "x = %.2f, y = %.2f", tuple(self.grid.find_center_of_mass(ColoredParticle))))
-        #metrics.append(("Red center of mass", "x = %.2f, y = %.2f", tuple(self.grid.find_center_of_mass(RedParticle))))
-        #metrics.append(("Blue center of mass", "x = %.2f, y = %.2f", tuple(self.grid.find_center_of_mass(BlueParticle))))
-        #metrics.append(("Green center of mass", "x = %.2f, y = %.2f", tuple(self.grid.find_center_of_mass(GreenParticle))))
-
         neighborhoods = self.grid.count_neighborhoods()
         heterogeneous_neighborhoods = self.grid.count_heterogeneous_neighborhoods()
         homogeneous_neighborhoods = neighborhoods - heterogeneous_neighborhoods
 
-        metrics.append(("Total neighborhoods", "%d", neighborhoods))
-        metrics.append(("Homogeneous neighborhoods", "%d", homogeneous_neighborhoods))
-        metrics.append(("Heterogeneous neighborhoods", "%d", heterogeneous_neighborhoods))
+        metrics = [("Lambda bias", "%.2f", self.bias),
+                   ("Alpha bias", "%.2f", self.bias_alpha),
+                   ("Connectivity rule", "%s", self.connectivity_rule.name),
+                   ("Iterations", "%d", self.iterations_run),
+                   ("Movements made", "%d", self.movements),
+                   ("Rounds completed:", "%d", self.rounds),
+                   ("Center of mass", "x = %.2f, y = %.2f", tuple(self.grid.find_center_of_mass(ColoredParticle))),
+                   ("Total neighborhoods", "%d", neighborhoods),
+                   ("Homogeneous neighborhoods", "%d", homogeneous_neighborhoods),
+                   ("Heterogeneous neighborhoods", "%d", heterogeneous_neighborhoods)]
 
         return metrics

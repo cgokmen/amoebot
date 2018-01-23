@@ -1,3 +1,4 @@
+# coding=utf-8
 import threading
 
 import numpy as np
@@ -32,6 +33,7 @@ BORDER_COLOR = (0.1, 0.1, 0.1)
 
 CORNER_PADDING = 2 * CIRCLE_DIST
 
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -41,9 +43,11 @@ def mkdir_p(path):
         else:
             raise
 
-class PDFS:
+
+class PDFS(object):
     """Simple class to allow gizeh to create pdf figures"""
-    def __init__(self, name, width, height, bg_color=None):
+
+    def __init__(self, name, width, height):
         self.width = width
         self.height = height
         self._cairo_surface = cairo.PDFSurface(name, width, height)
@@ -62,7 +66,7 @@ class PDFS:
 
 
 class CroppedVectorPlotter(object):
-    def __init__(self, compression_simulator, path=None, gif_path=None):
+    def __init__(self, compression_simulator, path=None):
         self.compression_simulator = compression_simulator
 
         if path is None:
@@ -76,14 +80,15 @@ class CroppedVectorPlotter(object):
 
         self.closed = False
 
-    def get_position_from_axial(self, axial_coordinates):
+    @staticmethod
+    def get_position_from_axial(axial_coordinates):
         return axial_to_pixel_mat.dot(axial_coordinates) * CIRCLE_DIST
 
     def draw_plot(self):
         if self.closed:
             raise ValueError("This plotter has been closed.")
 
-        #surface = PDFS(name=path, width=self.size[0], height=self.size[1])
+        # surface = PDFS(name=path, width=self.size[0], height=self.size[1])
         objects = []
 
         # Here we populate the isometric grid
@@ -97,11 +102,11 @@ class CroppedVectorPlotter(object):
                 circle = gizeh.circle(r=EMPTY_POSITION_RADIUS, xy=position, fill=EMPTY_POSITION_COLOR)
                 objects.append(circle)
 
-        #boundary_positions = [tuple(self.get_position_from_axial(e)) for e in self.compression_simulator.grid.extrema]
-        #boundary_positions.append(boundary_positions[0])
+        # boundary_positions = [tuple(self.get_position_from_axial(e)) for e in self.compression_simulator.grid.extrema]
+        # boundary_positions.append(boundary_positions[0])
 
-        #boundary = gizeh.polyline(points=boundary_positions, stroke_width=EDGE_WIDTH, stroke=BORDER_COLOR)
-        #objects.append(boundary)
+        # boundary = gizeh.polyline(points=boundary_positions, stroke_width=EDGE_WIDTH, stroke=BORDER_COLOR)
+        # objects.append(boundary)
 
         drawn_particles = {}
 
@@ -118,7 +123,8 @@ class CroppedVectorPlotter(object):
             tuple_position = tuple(position)
 
             for neighbor_position in neighbors_positions:
-                line = gizeh.polyline(points=[tuple_position, tuple(neighbor_position)], stroke_width=EDGE_WIDTH, stroke=(0.4, 0.4, 0.4))
+                line = gizeh.polyline(points=[tuple_position, tuple(neighbor_position)], stroke_width=EDGE_WIDTH,
+                                      stroke=(0.4, 0.4, 0.4))
                 objects.append(line)
 
             drawn_particles[particle] = True
@@ -131,13 +137,13 @@ class CroppedVectorPlotter(object):
 
         colors = (tuple([x / 255.0 for x in p.get_color()]) for p in particles)
         circles = [gizeh.circle(r=CIRCLE_RADIUS, xy=coord, fill=color,
-                              stroke=(0, 0, 0), stroke_width=CIRCLE_STROKE) for coord, color in zip(coords, colors)]
+                                stroke=(0, 0, 0), stroke_width=CIRCLE_STROKE) for coord, color in zip(coords, colors)]
         objects += circles
 
         group = gizeh.Group(objects)
 
         # Finally shift the group to the center of the field and return it
-        return (group.translate(xy=(-1 * com_coords)), max_coords[0], max_coords[1])
+        return group.translate(xy=(-1 * com_coords)), max_coords[0], max_coords[1]
 
     def plot(self, filename):
         group, max_x_dist, max_y_dist = self.draw_plot()
@@ -145,7 +151,7 @@ class CroppedVectorPlotter(object):
         w, h = 2 * (max_x_dist + CORNER_PADDING), 2 * (max_y_dist + CORNER_PADDING)
 
         plt = PDFS(filename, w, h)
-        group.translate(xy=(w/2, h/2)).draw(plt)
+        group.translate(xy=(w / 2, h / 2)).draw(plt)
         plt.flush()
         plt.finish()
 

@@ -1,11 +1,7 @@
-import colorsys
+# coding=utf-8
 
-import numpy as np
-import collections
+from compsim.simulate import Grid, Particle, ColoredParticle, Directions
 
-from compsim.simulate import Grid, Particle, ColoredParticle
-
-LEGACY_MATRIX = np.array([[1, 0], [0, -1]])
 
 BRIGHT_COLORS = [
     (230, 25, 75),
@@ -37,45 +33,46 @@ GREYSCALE_COLORS = [
     (100, 100, 100)
 ]
 
+
 def compression_simulator_grid_loader(filename, legacy=False, particle_types=(Particle,)):
     f = open(filename, "r")
 
-    size = np.array(map(int, f.readline().split()))
-    #print("Grid size: %d x %d" % (size[0], size[1]))
+    size = tuple(map(int, f.readline().split()))
     grid = Grid(size)
 
-    if np.any(size % 2 != 0):
+    if sum(s % 2 for s in size) > 0:
         raise ValueError("Width and height need to be even.")
 
     num_particles = int(f.readline())
 
-    for n in range(num_particles):
-        datum = map(int, f.readline().split())
+    legacy_padding = tuple(s / 2 for s in size)
 
-        position = np.array((datum[0], datum[1]))
-        ptype = 0 if len(datum) < 3 else datum[2]
+    for n in range(num_particles):
+        entry = map(int, f.readline().split())
+
+        position = (entry[0], entry[1])
+        ptype = 0 if len(entry) < 3 else entry[2]
 
         if legacy:
-            position -= size / 2
-            position = LEGACY_MATRIX.dot(position)
-            # position[1] = -position[0] - position[1]
+            raise ValueError("Legaecy support has been discontinued.")
 
         particle = particle_types[ptype](position, n)
 
         grid.add_particle(particle)
 
-    #print("Loaded %s successfully" % filename)
+    # print("Loaded %s successfully" % filename)
 
     return grid
+
 
 def separation_simulator_grid_loader(filename, base_class=ColoredParticle, colors=BRIGHT_COLORS):
     f = open(filename, "r")
 
-    size = np.array(map(int, f.readline().split()))
-    #print("Grid size: %d x %d" % (size[0], size[1]))
+    size = tuple(map(int, f.readline().split()))
+    # print("Grid size: %d x %d" % (size[0], size[1]))
     grid = Grid(size)
 
-    if np.any(size % 2 != 0):
+    if sum(s % 2 for s in size) > 0:
         raise ValueError("Width and height need to be even.")
 
     num_particles = int(f.readline())
@@ -85,25 +82,26 @@ def separation_simulator_grid_loader(filename, base_class=ColoredParticle, color
 
     for n in range(num_particles):
         data = map(int, f.readline().split())
-        position = np.array([data[0], data[1]])
+        position = (data[0], data[1])
 
         particle_data.append((position, data[2]))
         particle_classes[data[2]] = True
 
     # Generate the classes!
-    for index, id in enumerate(particle_classes.keys()):
+    for index, identifier in enumerate(particle_classes.keys()):
         col = colors[index]
 
-        subclass = type('ColoredParticle_%d' % id, (base_class,), {'COLOR': col})
-        particle_classes[id] = subclass
+        subclass = type('ColoredParticle_%d' % identifier, (base_class,), {'COLOR': col})
+        particle_classes[identifier] = subclass
 
     # Add the particles
     for key, item in enumerate(particle_data):
         grid.add_particle(particle_classes[item[1]](item[0], key))
 
-    #print("Loaded %s successfully" % filename)
+    # print("Loaded %s successfully" % filename)
 
     return grid
+
 
 def separation_simulator_grid_saver(filename, grid):
     with open(filename, 'w') as f:
