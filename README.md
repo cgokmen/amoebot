@@ -1,1 +1,1 @@
-# CompressionSimulator
+# Amoebot
