@@ -1,13 +1,13 @@
 # coding=utf-8
 import datetime
-import numpy as np
+import random
 
 from . import Directions
 
 
 class CompressionSimulator(object):
     def __init__(self, grid, bias):
-        self.validate_grid(grid)
+        # self.validate_grid(grid)
 
         self.grid = grid
         self.bias = float(bias)
@@ -31,13 +31,11 @@ class CompressionSimulator(object):
 
     def run_iterations(self, iterations, classes_to_move=None):
         particles = list(self.grid.get_all_particles(classes_to_move))
-        particle_choices = np.random.choice(particles, iterations)
-        direction_choices = np.random.choice(Directions.ALL, iterations)
-        probabilities = np.random.sample(iterations)
+        directions = Directions.ALL
 
         moves_made = 0
         for n in xrange(iterations):
-            if self.move(particle_choices[n], direction_choices[n], probabilities[n]):
+            if self.move(random.choice(particles), random.choice(directions), random.random()):
                 moves_made += 1
             self.iterations_run += 1
 
@@ -110,18 +108,21 @@ class CompressionSimulator(object):
         return a and (b or c)
 
     def property1(self, old_position, new_position, direction, classes_to_consider=None):
-        if self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 5),
-                                               classes_to_consider) is not None or self.grid.get_neighbor_in_direction(
-            old_position, Directions.shift_counterclockwise_by(direction, 1), classes_to_consider) is not None:
+        n1 = self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 5), classes_to_consider)
+        n2 = self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 1), classes_to_consider)
+        
+        if n1 is not None or n2 is not None:
             neighbors1 = []
             neighbors2 = []
 
             for i in xrange(5):
                 neighbors1.append(
-                    self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, i + 1),
+                    self.grid.get_neighbor_in_direction(old_position,
+                                                        Directions.shift_counterclockwise_by(direction, i + 1),
                                                         classes_to_consider) is not None)
                 neighbors2.append(
-                    self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, i + 4),
+                    self.grid.get_neighbor_in_direction(new_position,
+                                                        Directions.shift_counterclockwise_by(direction, i + 4),
                                                         classes_to_consider) is not None)
 
             changes1 = 0
@@ -151,10 +152,12 @@ class CompressionSimulator(object):
             if (self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 2),
                                                     classes_to_consider) is not None
                 ) and (
-                        self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 3),
+                        self.grid.get_neighbor_in_direction(old_position,
+                                                            Directions.shift_counterclockwise_by(direction, 3),
                                                             classes_to_consider) is None
             ) and (
-                        self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 4),
+                        self.grid.get_neighbor_in_direction(old_position,
+                                                            Directions.shift_counterclockwise_by(direction, 4),
                                                             classes_to_consider) is not None
             ):
                 return False
@@ -162,10 +165,12 @@ class CompressionSimulator(object):
             if (self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 1),
                                                     classes_to_consider) is not None
                 ) and (
-                        self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 0),
+                        self.grid.get_neighbor_in_direction(new_position,
+                                                            Directions.shift_counterclockwise_by(direction, 0),
                                                             classes_to_consider) is None
             ) and (
-                        self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 5),
+                        self.grid.get_neighbor_in_direction(new_position,
+                                                            Directions.shift_counterclockwise_by(direction, 5),
                                                             classes_to_consider) is not None
             ):
                 return False

@@ -10,8 +10,6 @@ class NewSeparationSimulator(CompressionSimulator):
         CompressionSimulator.__init__(self, grid, bias_lambda)
         self.bias_alpha = bias_alpha
 
-        self.validate_grid(grid)
-
     @staticmethod
     def validate_grid(grid, particle_class=ColoredParticle):
         if len(list(grid.get_all_particles(particle_class))) != len(list(grid.get_all_particles())):

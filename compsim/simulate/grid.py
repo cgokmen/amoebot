@@ -65,8 +65,8 @@ class Grid(object):
         return Grid.is_position_between_positions(axial_coordinates, self.min, self.max)
 
     def get_valid_coordinates(self):
-        x_range = xrange(self.min[0], self.max[0] + 1)
-        y_range = xrange(self.min[1], self.max[1] + 1)
+        x_range = range(self.min[0], self.max[0] + 1)
+        y_range = range(self.min[1], self.max[1] + 1)
         return itertools.product(x_range, y_range)
 
     def get_valid_empty_neighborhoods(self):
@@ -186,7 +186,9 @@ class Grid(object):
             return True
 
         # Does a breadth-first search reach all eligible particles?
-        return len(bfs(tuple(start_spot))) == num_eligible
+        searched = len(bfs(tuple(start_spot)))
+        print "Reached %d particles, %d total eligible" % (searched, num_eligible)
+        return searched == num_eligible
 
     def neighbor_count(self, axial_coordinates, classes_to_consider=None):
         return len(list(self.get_neighbors(axial_coordinates, classes_to_consider)))
