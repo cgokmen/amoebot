@@ -116,7 +116,7 @@ class FixedCroppedVectorPlotter(object):
         drawn_particles = {}
 
         # Draw the particle links
-        particles = self.compression_simulator.grid.get_all_particles()
+        particles = list(self.compression_simulator.grid.get_all_particles())
         for particle in particles:
             position = self.get_position_from_axial(particle.axial_coordinates)
 

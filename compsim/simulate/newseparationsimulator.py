@@ -6,25 +6,20 @@ from . import CompressionSimulator, ColoredParticle, Directions
 class NewSeparationSimulator(CompressionSimulator):
     # bias_lambda is the overall compression bias as in the compressionsim
     # bias_alpha is the bias for homogeneous grouping: > 1 wants homogeneity
-    def __init__(self, grid, bias_lambda, bias_alpha):
+    def __init__(self, grid, bias_lambda, bias_alpha, allow_swap=True):
         CompressionSimulator.__init__(self, grid, bias_lambda)
         self.bias_alpha = bias_alpha
+        self.allow_swap = allow_swap
 
     @staticmethod
     def validate_grid(grid, particle_class=ColoredParticle):
         if len(list(grid.get_all_particles(particle_class))) != len(list(grid.get_all_particles())):
-            raise ValueError("The configuration contains particles unsupported by SeparationSimulator")
+            raise ValueError("The configuration contains particles unsupported by NewSeparationSimulator")
 
-        # Check if the entire system remains connected
-        if not grid.particles_connected():
-            raise ValueError("The configuration has disconnected particles.")
-
-        for sc in particle_class.__subclasses__():
-            if not grid.particle_holes(sc):
-                raise ValueError("The configuration has holes within classes.")
+        return CompressionSimulator.validate_grid(grid)
 
     def get_bias(self, particle):
-        raise ValueError("No single bias in the Separation Simulator")
+        raise ValueError("No single bias in the NewSeparationSimulator")
 
     def get_move_probability(self, particle, current_location, new_location):
         current_neighbors = set(self.grid.get_neighbors(current_location))
@@ -52,20 +47,23 @@ class NewSeparationSimulator(CompressionSimulator):
             # print("Invalid")
             return False
 
+        prob_move = 1
+
         swap_particle = self.grid.get_particle(new_location)
+
         if swap_particle is not None:
+            if not self.allow_swap:
+                return False
+
             sp_type = type(swap_particle)
 
             if sp_type == type(random_particle):
                 # We can only swap particles of different colors
                 return False
 
-            # Validate the swap
-            if not self.valid_move(swap_particle, new_location, current_location,
-                                   Directions.shift_counterclockwise_by(random_direction, 3)):
-                return False
+            prob_move *= self.get_move_probability(swap_particle, new_location, current_location)
 
-        prob_move = self.get_move_probability(random_particle, current_location, new_location)
+        prob_move *= self.get_move_probability(random_particle, current_location, new_location)
         # print("Prob: " + str(prob_move))
         self.probability_series.append(prob_move)
 
@@ -100,53 +98,53 @@ class NewSeparationSimulator(CompressionSimulator):
 
         return True
 
-    def valid_move(self, particle, old_position, new_position, direction):
-        ptype = type(particle)
+    #def valid_move(self, particle, old_position, new_position, direction):
+    #    ptype = type(particle)
 
-        n = self.grid.neighbor_count(old_position, ptype) < 5
+    #    n = self.grid.neighbor_count(old_position, ptype) < 5
 
-        p1 = self.property1(old_position, new_position, direction, ptype)
-        p2 = self.new_property2(old_position, new_position, direction, ptype)
+    #    p1 = True #self.property1(old_position, new_position, direction, ptype)
+    #    p2 = True #self.new_property2(old_position, new_position, direction, ptype)
 
-        p3 = self.property1(old_position, new_position, direction)
-        p4 = self.property2(old_position, new_position, direction)
+    #    p3 = True self.property1(old_position, new_position, direction)
+    #    p4 = True self.property2(old_position, new_position, direction)
 
-        return n and (p1 or p2) and (p3 or p4)
+    #    return n and (p1 or p2) and (p3 or p4)
 
-    def new_property2(self, old_position, new_position, direction, classes_to_consider=None):
-        # This is the same property 2 as before, but the non-empty neighborhood
-        # requirement is removed.
-        s1 = self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 5),
-                                                 classes_to_consider)
-        s2 = self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 1),
-                                                 classes_to_consider)
-
-        if s1 is None and s2 is None:
-            if (self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 2),
-                                                    classes_to_consider) is not None
-                ) and (
-                        self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 3),
-                                                            classes_to_consider) is None
-            ) and (
-                        self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 4),
-                                                            classes_to_consider) is not None
-            ):
-                return False
-
-            if (self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 1),
-                                                    classes_to_consider) is not None
-                ) and (
-                        self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 0),
-                                                            classes_to_consider) is None
-            ) and (
-                        self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 5),
-                                                            classes_to_consider) is not None
-            ):
-                return False
-
-            return True
-        else:
-            return False
+    # def new_property2(self, old_position, new_position, direction, classes_to_consider=None):
+    #     # This is the same property 2 as before, but the non-empty neighborhood
+    #     # requirement is removed.
+    #     s1 = self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 5),
+    #                                              classes_to_consider)
+    #     s2 = self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 1),
+    #                                              classes_to_consider)
+    #
+    #     if s1 is None and s2 is None:
+    #         if (self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 2),
+    #                                                 classes_to_consider) is not None
+    #             ) and (
+    #                     self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 3),
+    #                                                         classes_to_consider) is None
+    #         ) and (
+    #                     self.grid.get_neighbor_in_direction(old_position, Directions.shift_counterclockwise_by(direction, 4),
+    #                                                         classes_to_consider) is not None
+    #         ):
+    #             return False
+    #
+    #         if (self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 1),
+    #                                                 classes_to_consider) is not None
+    #             ) and (
+    #                     self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 0),
+    #                                                         classes_to_consider) is None
+    #         ) and (
+    #                     self.grid.get_neighbor_in_direction(new_position, Directions.shift_counterclockwise_by(direction, 5),
+    #                                                         classes_to_consider) is not None
+    #         ):
+    #             return False
+    #
+    #         return True
+    #     else:
+    #         return False
 
     def get_metrics(self, classes_to_move=None):
         neighborhoods = self.grid.count_neighborhoods()

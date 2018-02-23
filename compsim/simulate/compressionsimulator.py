@@ -7,7 +7,7 @@ from . import Directions
 
 class CompressionSimulator(object):
     def __init__(self, grid, bias):
-        # self.validate_grid(grid)
+        self.validate_grid(grid)
 
         self.grid = grid
         self.bias = float(bias)

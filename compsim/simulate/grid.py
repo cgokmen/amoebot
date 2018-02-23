@@ -34,7 +34,7 @@ class Directions(object):
     SW = Direction(4, (-1, 1))
     S = Direction(5, (0, 1))
 
-    ALL = [SW, NE, N, NW, SW, S]
+    ALL = [SE, NE, N, NW, SW, S]
 
     @staticmethod
     def shift_counterclockwise_by(d, by):
@@ -101,14 +101,14 @@ class Grid(object):
         particle = self.get_particle(old_position)
 
         if particle is None:
-            return
+            raise ValueError("No particle to move.")
 
         existing_particle = self.get_particle(new_position)
         if existing_particle is not None:
-            return
+            raise ValueError("There is an existing particle at the move destination.")
 
         if not self.is_position_in_bounds(new_position):
-            return
+            raise ValueError("Destination is out of bounds.")
 
         self._map_backend[particle.axial_coordinates] = None
         particle.move(new_position)
@@ -187,7 +187,6 @@ class Grid(object):
 
         # Does a breadth-first search reach all eligible particles?
         searched = len(bfs(tuple(start_spot)))
-        print "Reached %d particles, %d total eligible" % (searched, num_eligible)
         return searched == num_eligible
 
     def neighbor_count(self, axial_coordinates, classes_to_consider=None):

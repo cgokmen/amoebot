@@ -28,9 +28,9 @@ BRIGHT_COLORS = [
 ]
 
 GREYSCALE_COLORS = [
-    (200, 200, 200),
+    (230, 230, 230),
     (0, 0, 0),
-    (100, 100, 100)
+    (115, 115, 115)
 ]
 
 
@@ -54,7 +54,7 @@ def compression_simulator_grid_loader(filename, legacy=False, particle_types=(Pa
         ptype = 0 if len(entry) < 3 else entry[2]
 
         if legacy:
-            raise ValueError("Legaecy support has been discontinued.")
+            raise ValueError("Legacy support has been discontinued.")
 
         particle = particle_types[ptype](position, n)
 
@@ -105,7 +105,7 @@ def separation_simulator_grid_loader(filename, base_class=ColoredParticle, color
 
 def separation_simulator_grid_saver(filename, grid):
     with open(filename, 'w') as f:
-        particles = grid.get_all_particles()
+        particles = list(grid.get_all_particles())
         classes_ids = dict()
         curr_id = 0
 

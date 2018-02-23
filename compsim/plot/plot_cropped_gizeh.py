@@ -111,7 +111,7 @@ class CroppedVectorPlotter(object):
         drawn_particles = {}
 
         # Draw the particle links
-        particles = self.compression_simulator.grid.get_all_particles()
+        particles = list(self.compression_simulator.grid.get_all_particles())
         for particle in particles:
             position = self.get_position_from_axial(particle.axial_coordinates)
 
@@ -150,7 +150,7 @@ class CroppedVectorPlotter(object):
 
         w, h = 2 * (max_x_dist + CORNER_PADDING), 2 * (max_y_dist + CORNER_PADDING)
 
-        plt = PDFS(filename, w, h)
+        plt = PDFS(os.path.join(self.path, filename), w, h)
         group.translate(xy=(w / 2, h / 2)).draw(plt)
         plt.flush()
         plt.finish()

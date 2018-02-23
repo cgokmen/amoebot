@@ -133,6 +133,9 @@ class VectorPlotter(object):
                                   stroke_width=CIRCLE_STROKE)
             circle.draw(surface)
 
+            #gizeh.text("%d" % self.compression_simulator.grid.neighbor_count(particle.axial_coordinates), fontfamily="Impact", fontsize=CIRCLE_RADIUS,
+            #           fill=(1, 1, 1), xy=tuple_position).draw(surface)
+
             drawn_particles[particle] = True
 
         # start = self.get_position_from_axial(self.compression_simulator.grid.max)
